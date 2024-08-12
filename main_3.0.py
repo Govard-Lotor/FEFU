@@ -285,7 +285,7 @@ class Interface:
                 pygame.display.flip()
 
 
-size = 10
+size = 20
 model = Model(size)
 model.start()
 
