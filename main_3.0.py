@@ -33,14 +33,18 @@ class Model:
         self.matrix_spin = []
         self.matrix_id = []
         self.matrix_connection = []
+        self.matrix_spin_change = []
 
         self.quartet = []
 
         self.energy_all = 0
-        self.energy_quartet = []
+
+        self.frustration_row = []
+        self.frustration_col = []
 
     def create_spin_matrix(self):
         self.matrix_spin = np.random.choice([-1, 1], (self.size, self.size))
+        self.matrix_spin.copy()
 
     def create_connection_matrix(self):
         a = 0
@@ -126,16 +130,66 @@ class Model:
             for q in line:
                 self.energy_all += self.count_energy(q)
 
+    def count_frustration(self):
+        dop = []
+        colletor = []
+
+        for line in range(0, self.size_matrix, 2):
+            for q in range(0, self.size_matrix - 1, 2):
+                spin_1 = self.matrix_connection[line][q]
+                x, y = self.find_x_y(spin_1)
+                spin_1 = self.matrix_spin[y][x]
+
+                spin_2 = self.matrix_connection[line][q + 2]
+                x, y = self.find_x_y(spin_2)
+                spin_2 = self.matrix_spin[y][x]
+
+                if spin_1 * spin_2 * self.matrix_connection[line][q + 1] < 0:
+                    dop.append(0)
+                else:
+                    dop.append(1)
+            colletor.append(dop)
+            dop = []
+        self.frustration_row = colletor
+
+        dop = []
+        colletor = []
+
+        for col in range(0, self.size_matrix, 2):
+            for q in range(0, self.size_matrix - 1, 2):
+                spin_1 = self.matrix_connection[q][col]
+                x, y = self.find_x_y(spin_1)
+                spin_1 = self.matrix_spin[y][x]
+
+                spin_2 = self.matrix_connection[q + 2][col]
+                x, y = self.find_x_y(spin_2)
+                spin_2 = self.matrix_spin[y][x]
+
+                if spin_1 * spin_2 * self.matrix_connection[q + 1][col] < 0:
+                    dop.append(0)
+                else:
+                    dop.append(1)
+            colletor.append(dop)
+            dop = []
+        self.frustration_col = colletor
+
+    def algorithm_1(self):
+        dop, collector = [], []
+        counter = 0
+        for :
+
+
     def start(self):
         self.create_spin_matrix()
         self.create_connection_matrix()
         self.create_spin_id()
         self.create_quartet()
         self.count_energy_all()
+        self.count_frustration()
 
     def return_parameters(self):
-        supper_array = [self.size, self.size_matrix, self.matrix_spin, self.matrix_id,
-                        self.matrix_connection, self.quartet, self.energy_all, self.energy_quartet]
+        supper_array = [self.size, self.size_matrix, self.matrix_spin, self.matrix_id, self.matrix_connection,
+                        self.quartet, self.energy_all, self.frustration_row, self.frustration_col]
 
         return supper_array
 
@@ -145,7 +199,7 @@ pygame.init()
 
 class Interface:
     def __init__(self, size, size_matrix, matrix_spin, matrix_id,
-                        matrix_connection, quartet, energy_all, energy_quartet):
+                        matrix_connection, quartet, energy_all, frustration_row, frustration_col):
 
         self.screen = pygame.display.set_mode((1900, 1000))
         self.screen.fill((240, 230, 220))
@@ -179,7 +233,8 @@ class Interface:
         self.matrix_connection = matrix_connection
         self.quartet = quartet
         self.energy_all = energy_all
-        self.energy_quartet = energy_quartet
+        self.frustration_row = frustration_row
+        self.frustration_col = frustration_col
 
     def draw_spin(self, matrix, surface):
         x, y = 6, 6
@@ -241,6 +296,25 @@ class Interface:
 
         pygame.draw.rect(self.screen, color, (x, y, 150, 70))
 
+    def draw_frustration(self, frustration_row, frustration_col, surface):
+        x, y = 3, 3
+        for line in frustration_row:
+            for q in line:
+                if q == 0:
+                    pygame.draw.rect(surface, (255, 0, 255), (x, y, 30 + 30 + 15 + 6, 30 + 6), 4)
+                x += 15 + 30
+            x = 3
+            y += 30 + 15
+        ################
+        x, y = 3, 3
+        for col in frustration_col:
+            for q in col:
+                if q == 0:
+                    pygame.draw.rect(surface, (128, 0, 128), (x, y, 30 + 6, 30 + 30 + 15 + 6), 4)
+                y += 15 + 30
+            y = 3
+            x += 30 + 15
+
     def change_marker(self, coordinates):
         local_interval = (1000 - self.radius - 70) // 2
         x, y = 10, self.radius + local_interval
@@ -255,11 +329,12 @@ class Interface:
 
         self.screen.blit(text1, (x, y + 30))
 
-    def draw_surface(self, quartet_energy, surface, matrix_spin, matrix_connection, x, y):
+    def draw_surface(self, frustration_row, frustration_col, surface, matrix_spin, matrix_connection, x, y):
         surface.fill((145, 144, 89))
         self.draw_spin(matrix_spin, surface)
         self.draw_connection(matrix_connection, surface)
-
+        if self.marker == 1:
+            self.draw_frustration(frustration_row, frustration_col, surface)
         self.screen.blit(surface, (x, y))
 
     def start(self):
@@ -276,9 +351,10 @@ class Interface:
                     if event.button == 1:
                         self.change_marker(pygame.mouse.get_pos())
 
-                self.draw_surface(self.energy_quartet, self.surface, self.matrix_spin, self.matrix_connection, 5, 5)
-                self.draw_surface(self.energy_quartet, self.surface, self.matrix_spin, self.matrix_connection,
-                                  self.interval, 5)
+                self.draw_surface(self.frustration_row, self.frustration_col, self.surface,
+                                  self.matrix_spin, self.matrix_connection, 5, 5)
+                self.draw_surface(self.frustration_row, self.frustration_col,self.surface,
+                                  self.matrix_spin, self.matrix_connection, self.interval, 5)
 
                 self.draw_button(pygame.mouse.get_pos())
                 self.draw_text()
