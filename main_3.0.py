@@ -164,6 +164,8 @@ class Model:
         self.frustration_col = colletor
 
     def count_frustration_change(self):
+        self.frustration_row_ch = []
+        self.frustration_col_ch = []
         dop = []
         colletor = []
 
@@ -207,7 +209,7 @@ class Model:
         self.frustration_col_ch = colletor
 
     def algorithm_1(self):
-        for operation in range(0, self.size * 2 - 1, 2):
+        for operation in range(0, self.size * 2 - 1, 1):
 
             if operation % 2 == 0:
                 for q in range(0, self.size_matrix - 1, 2):
@@ -220,23 +222,55 @@ class Model:
                     x, y = self.find_x_y(self.matrix_connection[operation][q + 2])
                     c = self.matrix_spin_change[y][x]
                     if a * b * c < 0:
-                        print(a, b, c)
                         x, y = self.find_x_y(self.matrix_connection[operation][q + 2])
                         self.spin(x, y, self.matrix_spin_change)
 
             elif operation % 2 != 0:
                 for q in range(0, self.size_matrix - 1, 2):
 
-                    x, y = self.find_x_y(self.matrix_connection[operation][q])
+                    x, y = self.find_x_y(self.matrix_connection[operation - 1][q])
                     a = self.matrix_spin_change[y][x]
 
-                    b = self.matrix_connection[operation + 1][q]
+                    b = self.matrix_connection[operation][q]
 
-                    x, y = self.find_x_y(self.matrix_connection[operation + 2][q])
+                    x, y = self.find_x_y(self.matrix_connection[operation + 1][q])
                     c = self.matrix_spin_change[y][x]
                     if a * b * c < 0:
-                        x, y = self.find_x_y(self.matrix_connection[operation + 2][q])
+                        x, y = self.find_x_y(self.matrix_connection[operation + 1][q])
                         self.spin(x, y, self.matrix_spin_change)
+
+    def algorith_2(self):
+        counter = 0
+        energy_main = 0
+        energy_new = 0
+
+        for line in range(0, self.size_matrix - 1, 4):
+            spin_line = self.matrix_connection[line]
+
+            if 0 == 0:
+                for q in self.quartet[counter]:
+                    energy_main += self.count_energy(q, self.matrix_spin_change)
+
+                for spin in range(0, self.size_matrix, 2):
+                    spin = self.matrix_connection[line][spin]
+                    x, y = self.find_x_y(spin)
+                    self.spin(x, y, self.matrix_spin_change)
+
+                for q in self.quartet[counter]:
+                    energy_new += self.count_energy(q, self.matrix_spin_change)
+                print(f'old{energy_main}, new{energy_new}')
+                if energy_main < energy_new:
+                    for spin in range(0, self.size_matrix, 2):
+                        spin = self.matrix_connection[line][spin]
+                        x, y = self.find_x_y(spin)
+                        self.spin(x, y, self.matrix_spin_change)
+
+            energy_main = 0
+            energy_new = 0
+            counter += 2
+            self.count_frustration_change()
+            self.energy_all_change, self.energy_all = 0, 0
+            self.count_energy_all()
 
     def start(self):
         self.create_spin_matrix()
@@ -267,6 +301,17 @@ class Model:
 
         self.frustration_row_ch = []
         self.frustration_col_ch = []
+
+    def continue_algorithm_1(self):
+        self.energy_all_change = 0
+        self.energy_all = 0
+        self.frustration_col_ch = []
+        self.frustration_row_ch = []
+
+        self.algorithm_1()
+        self.count_frustration_change()
+        self.count_energy_all()
+
     def return_parameters(self):
         supper_array = [self.size, self.size_matrix, self.matrix_spin, self.matrix_id, self.matrix_connection,
                         self.quartet, self.energy_all, self.frustration_row, self.matrix_spin_change,
@@ -363,8 +408,6 @@ class Interface:
             y += 30 + 15
             x = 6 + 10
 
-    def draw_quartets(self, quartet_energy, surface):
-        pass
 
     def draw_button(self, coordinates):
         local_interval = (1000 - self.radius - 70) // 2
@@ -463,6 +506,11 @@ class Interface:
                         model.start()
                         self.restart(*model.return_parameters())
 
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    if event.button == 4:
+                        model.algorith_2()
+                        self.restart(*model.return_parameters())
+
                 ######################################
                 self.draw_surface(self.frustration_row, self.frustration_col, self.surface,
                                   self.matrix_spin, self.matrix_connection, 5, 5)
@@ -479,7 +527,6 @@ size = 20
 model = Model(size)
 model.start()
 
-print(model.energy_all, model.energy_all_change, end="    ")
 
 interface = Interface(*model.return_parameters())
 interface.start()
