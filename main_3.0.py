@@ -408,7 +408,6 @@ class Interface:
             y += 30 + 15
             x = 6 + 10
 
-
     def draw_button(self, coordinates):
         local_interval = (1000 - self.radius - 70) // 2
         color = ()
@@ -473,10 +472,12 @@ class Interface:
         text2 = f1.render(f'Final energy -    [{self.energy_all_change}]', True, (50, 50, 50))
 
         text3 = f1.render('ПКМ - генерация новой матрицы', True, (50, 50, 50))
+        text4 = f1.render('колесико вверх - алгоритм 2', True, (50, 50, 50))
 
         self.screen.blit(text1, (x, y + 30))
         self.screen.blit(text2, (x + 300, y + 30))
         self.screen.blit(text3, (x + 600, y + 30))
+        self.screen.blit(text4, (x + 1100, y + 30))
 
     def draw_surface(self, frustration_row, frustration_col, surface, matrix_spin, matrix_connection, x, y):
         surface.fill((145, 144, 89))
