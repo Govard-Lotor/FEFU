@@ -110,16 +110,64 @@ class Model:
         return energy_main
 
     def count_energy_all(self):
-        if len(self.quartet) == 0:
-            return 0
+        energy_start = 0
+        energy_final = 0
+        energy_line = 0
+        for line in range(0, self.size_matrix, 2):
+            for connection in range(0, self.size_matrix - 1, 2):
+                one = self.matrix_connection[line][connection]
+                x_one, y_one = self.find_x_y(one)
+                two = self.matrix_connection[line][connection + 2]
+                x_two, y_two = self.find_x_y(two)
 
-        for line in self.quartet:
-            for q in line:
-                self.energy_all += self.count_energy(q, self.matrix_spin)
+                spin_1 = self.matrix_spin[y_one][x_one]
+                spin_2 = self.matrix_spin[y_two][x_two]
+                energy_line += spin_1 * spin_2 * self.matrix_connection[line][connection + 1]
+        for connection in range(0, self.size_matrix, 2):
+            for line in range(0, self.size_matrix - 1, 2):
+                one = self.matrix_connection[line][connection]
+                x_one, y_one = self.find_x_y(one)
+                two = self.matrix_connection[line + 2][connection]
+                x_two, y_two = self.find_x_y(two)
 
-        for line in self.quartet:
-            for q in line:
-                self.energy_all_change += self.count_energy(q, self.matrix_spin_change)
+                spin_1 = self.matrix_spin[y_one][x_one]
+                spin_2 = self.matrix_spin[y_two][x_two]
+                energy_line += spin_1 * spin_2 * self.matrix_connection[line + 1][connection]
+        self.energy_all = -1 * energy_line
+
+        energy_line = 0
+        for line in range(0, self.size_matrix, 2):
+            for connection in range(0, self.size_matrix - 1, 2):
+                one = self.matrix_connection[line][connection]
+                x_one, y_one = self.find_x_y(one)
+                two = self.matrix_connection[line][connection + 2]
+                x_two, y_two = self.find_x_y(two)
+
+                spin_1 = self.matrix_spin_change[y_one][x_one]
+                spin_2 = self.matrix_spin_change[y_two][x_two]
+                energy_line += spin_1 * spin_2 * self.matrix_connection[line][connection + 1]
+        for connection in range(0, self.size_matrix, 2):
+            for line in range(0, self.size_matrix - 1, 2):
+                one = self.matrix_connection[line][connection]
+                x_one, y_one = self.find_x_y(one)
+                two = self.matrix_connection[line + 2][connection]
+                x_two, y_two = self.find_x_y(two)
+
+                spin_1 = self.matrix_spin_change[y_one][x_one]
+                spin_2 = self.matrix_spin_change[y_two][x_two]
+                energy_line += spin_1 * spin_2 * self.matrix_connection[line + 1][connection]
+        self.energy_all_change = -1 * energy_line
+
+        # if len(self.quartet) == 0:
+        #     return 0
+        #
+        # for line in self.quartet:
+        #     for q in line:
+        #         self.energy_all += self.count_energy(q, self.matrix_spin)
+        #
+        # for line in self.quartet:
+        #     for q in line:
+        #         self.energy_all_change += self.count_energy(q, self.matrix_spin_change)
 
     def count_frustration(self):
         dop = []
@@ -257,10 +305,11 @@ class Model:
                     x, y = self.find_x_y(spin)
                     self.spin(x, y, self.matrix_spin_change)
 
-                for q in self.quartet[counter]:
-                    energy_new += self.count_energy(q, self.matrix_spin_change)
-                print(f'old{energy_main}, new{energy_new}')
-                if energy_main < energy_new:
+                energy_main = self.energy_all_change
+                self.count_energy_all()
+
+                print(f'old{energy_main}, new{self.energy_all_change}')
+                if energy_main < self.energy_all_change:
                     for spin in range(0, self.size_matrix, 2):
                         spin = self.matrix_connection[line][spin]
                         x, y = self.find_x_y(spin)
@@ -352,6 +401,11 @@ class Model:
         letter = []
 
         for matrix in connection_matrix_extra:
+            self.clear()
+
+            self.size = size
+            self.size_matrix = size_matrix
+
             self.matrix_connection = file_manager.create_connection_matrix(connection_matrix_extra[matrix])
 
             self.create_spin_matrix()
@@ -362,6 +416,9 @@ class Model:
 
             self.algorithm_1()
 
+            self.algorith_2()
+            self.algorith_2()
+
             self.count_frustration_change()
             self.count_energy_all()
             #######################
@@ -369,11 +426,12 @@ class Model:
                 for i in range(4):
                     f.readline()
                 energy_original = f.readline()
-
-
+            print(sum(self.matrix_spin_change[0]))
+            spin_excess = str(sum(list(map(int, (sum(i) for i in self.matrix_spin_change)))))
             message = \
-                f"{file_manager.con_files[matrix]} \t energy_start - {self.energy_all} \t|\t " \
-                f"energy_final - {self.energy_all_change} \t energy_original - {energy_original.split()[1]}\n"
+                f"{file_manager.con_files[matrix]} \t spin excess - {spin_excess} \t|\t " \
+                f"energy_final - {self.energy_all_change} \t energy_original - {energy_original.split()[1]}\t|\t" \
+                f"percentage - {round(self.energy_all_change / int(energy_original.split()[1])* 100, 2)}%\n"
             letter.append(message)
 
             with open("results.txt", "w+") as file:
@@ -817,9 +875,7 @@ class Model_for_file:
 # model.start()
 #
 #
-# interface = Interface(*model.return_parameters())
-# interface.connect(model)
-# interface.start()
+
 
 file_manager = File_manager()
 model = Model(8)
@@ -827,3 +883,7 @@ model = Model(8)
 file_manager.start()
 print(file_manager.res_files)
 model.check_files(file_manager, *file_manager.return_parameters())
+
+# interface = Interface(*model.return_parameters())
+# interface.connect(model)
+# interface.start()
