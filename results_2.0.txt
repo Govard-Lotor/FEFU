@@ -1,0 +1,5 @@
+cell64_J0_0.dat 	 spin excess - 6 	|	 energy_final - -70 	 energy_original - -82	|	percentage - 85.37%
+cell64_J-20_1.dat 	 spin excess - 12 	|	 energy_final - -72 	 energy_original - -84	|	percentage - 85.71%
+cell64_J42_0.dat 	 spin excess - 0 	|	 energy_final - -72 	 energy_original - -80	|	percentage - 90.0%
+cell64_J-88_8.dat 	 spin excess - 4 	|	 energy_final - -74 	 energy_original - -88	|	percentage - 84.09%
+cell64_J112_9.dat 	 spin excess - 64 	|	 energy_final - -112 	 energy_original - -112	|	percentage - 100.0%
