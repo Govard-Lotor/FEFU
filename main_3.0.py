@@ -109,6 +109,7 @@ class Model:
         return energy_main
 
     def count_energy_all(self):
+        self.energy_all_change, self.energy_all = 0, 0
         if len(self.quartet) == 0:
             return 0
 
@@ -247,30 +248,29 @@ class Model:
         for line in range(0, self.size_matrix - 1, 4):
             spin_line = self.matrix_connection[line]
 
-            if 0 == 0:
-                for q in self.quartet[counter]:
-                    energy_main += self.count_energy(q, self.matrix_spin_change)
+            self.count_energy_all()
+            energy_main = self.energy_all_change
 
+            for spin in range(0, self.size_matrix, 2):
+                spin = self.matrix_connection[line][spin]
+                x, y = self.find_x_y(spin)
+                self.spin(x, y, self.matrix_spin_change)
+
+            self.count_energy_all()
+            energy_new = self.energy_all_change
+            print(f'old{energy_main}, new{energy_new}')
+            if energy_main < energy_new:
                 for spin in range(0, self.size_matrix, 2):
                     spin = self.matrix_connection[line][spin]
                     x, y = self.find_x_y(spin)
                     self.spin(x, y, self.matrix_spin_change)
 
-                for q in self.quartet[counter]:
-                    energy_new += self.count_energy(q, self.matrix_spin_change)
-                print(f'old{energy_main}, new{energy_new}')
-                if energy_main < energy_new:
-                    for spin in range(0, self.size_matrix, 2):
-                        spin = self.matrix_connection[line][spin]
-                        x, y = self.find_x_y(spin)
-                        self.spin(x, y, self.matrix_spin_change)
-
             energy_main = 0
             energy_new = 0
             counter += 2
-            self.count_frustration_change()
-            self.energy_all_change, self.energy_all = 0, 0
-            self.count_energy_all()
+        self.count_frustration_change()
+        self.energy_all_change, self.energy_all = 0, 0
+        self.count_energy_all()
 
     def algorithm_3(self):
         counter = 0
@@ -549,6 +549,7 @@ class Interface:
 
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if event.button == 5:
+                        model.algorithm_3()
                         model.algorithm_3()
                         self.restart(*model.return_parameters())
 

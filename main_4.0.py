@@ -3,6 +3,7 @@ import random
 import pygame
 import sys
 import os
+from itertools import product
 
 
 class Model:
@@ -354,6 +355,445 @@ class Model:
             self.energy_all_change, self.energy_all = 0, 0
             self.count_energy_all()
 
+    def algorithm_4(self):
+        self.create_quartet()
+        frustrate_quartet = 0
+        for line in self.quartet:
+            for q in line:
+                minus = 0
+                l_1 = q[0]
+                l_2 = q[1]
+                l_3 = q[2]
+                a, b, c, d = 0, 0, 0, 0
+
+                x, y = self.find_x_y(l_1[0])
+                a = self.matrix_spin_change[y][x]
+
+                x, y = self.find_x_y(l_1[2])
+                b = self.matrix_spin_change[y][x]
+
+                x, y = self.find_x_y(l_3[2])
+                c = self.matrix_spin_change[y][x]
+
+                x, y = self.find_x_y(l_3[0])
+                d = self.matrix_spin_change[y][x]
+
+                if a * l_1[1] * b == -1:
+                    minus += 1
+                if d * l_3[1] * c == -1:
+                    minus += 1
+
+                if a * l_2[0] * d == -1:
+                    minus += 1
+                if b * l_2[2] * c == -1:
+                    minus += 1
+
+                if minus % 2 != 0:
+                    frustrate_quartet += 1
+
+        self.count_energy_all()
+
+        return frustrate_quartet
+        # if 1 <= frustrate_quartet <= 2:
+        #     while self.energy_all_change != -10:
+        #         self.algorithm_1()
+        #         x, y = random.choice([i for i in range(self.size)]), random.choice([i for i in range(self.size)])
+        #         self.spin(x, y, self.matrix_spin_change)
+        #         self.count_energy_all()
+        #         print(f"fr {frustrate_quartet} en {self.energy_all_change} x {x}, y {y}")
+        #
+        # elif frustrate_quartet > 2:
+        #     while self.energy_all_change != -8:
+        #         x, y = random.choice([i for i in range(self.size)]), random.choice([i for i in range(self.size)])
+        #         self.spin(x, y, self.matrix_spin_change)
+        #         self.count_energy_all()
+        #         print(f"fr {frustrate_quartet} en {self.energy_all_change} x {x}, y {y}")
+        #
+        # elif frustrate_quartet == 0:
+        #     while self.energy_all_change != -12:
+        #         x, y = random.choice([i for i in range(self.size)]), random.choice([i for i in range(self.size)])
+        #         self.spin(x, y, self.matrix_spin_change)
+        #         self.count_energy_all()
+        #         print(f"fr {frustrate_quartet} en {self.energy_all_change} x {x}, y {y}")
+        #
+        # self.count_energy_all()
+
+    def algorithm_5(self):
+        count = 0
+        quartet_frustration_array = []
+        dop = []
+        ch_x, ch_y = 0, 0
+
+        for i in self.quartet:
+            for j in i:
+                dop.append(self.check_quartet(j))
+                print(self.check_quartet(j))
+            quartet_frustration_array.append(dop)
+            print()
+            dop = []
+
+        for line in self.quartet:
+            for q in line:
+                frustration = self.check_quartet(q)
+
+                l_1 = q[0]
+                l_2 = q[1]
+                l_3 = q[2]
+                a, b, c, d = 0, 0, 0, 0
+
+                x_a, y_a = self.find_x_y(l_1[0])
+                a = self.matrix_spin_change[y_a][x_a]
+
+                x_b, y_b = self.find_x_y(l_1[2])
+                b = self.matrix_spin_change[y_b][x_b]
+
+                x_c, y_c = self.find_x_y(l_3[2])
+                c = self.matrix_spin_change[y_c][x_c]
+
+                x_d, y_d = self.find_x_y(l_3[0])
+                d = self.matrix_spin_change[y_d][x_d]
+
+                if frustration == 0:
+
+                    print(np.array(q))
+                    if a * l_1[1] * b != 1:
+                        self.spin(x_b, y_b, self.matrix_spin_change)
+                        b = b * -1
+                        print("change_b")
+
+                    if b * l_2[2] * c != 1:
+                        self.spin(x_c, y_c, self.matrix_spin_change)
+                        c = c * -1
+                        print("change_c")
+
+                    if c * l_3[1] * d != 1:
+                        self.spin(x_d, y_d, self.matrix_spin_change)
+                        d = d * -1
+                        print("change_d")
+
+                else:
+                    if ch_y == 0:
+
+                        if a * l_1[1] * b != 1:
+                            self.spin(x_b, y_b, self.matrix_spin_change)
+                            b = b * -1
+                        if b * l_2[2] * c != 1:
+                            self.spin(x_c, y_c, self.matrix_spin_change)
+                            c = c * -1
+
+                    else:
+                        if ch_x <= self.size - 2:
+                            marker = quartet_frustration_array[ch_y - 1][ch_x]
+                            if a * l_1[1] * b != 1 and marker != 1:
+                                self.spin(x_b, y_b, self.matrix_spin_change)
+                                b = b * -1
+
+                            if b * l_2[2] * c != 1:
+                                self.spin(x_c, y_c, self.matrix_spin_change)
+                                c = c * -1
+                        else:
+                            marker_u = quartet_frustration_array[ch_y - 1][ch_x]
+                            marker_r = quartet_frustration_array[ch_y - 1][ch_x + 1]
+                            if (a * l_1[1] * b != 1 and marker_u == 1) or (a * l_1[1] * b != 1 and marker_r == 1):
+                                self.spin(x_b, y_b, self.matrix_spin_change)
+                                b = b * -1
+
+                            if b * l_2[2] * c != 1:
+                                self.spin(x_c, y_c, self.matrix_spin_change)
+                                c = c * -1
+
+                ch_x += 1
+            print()
+            ch_y += 1
+            ch_x = 0
+
+        self.count_energy_all()
+        self.count_frustration_change()
+
+    def algorithm_5_test(self):
+        count = 0
+        quartet_frustration_array = []
+        dop = []
+        ch_x, ch_y = 0, 0
+
+        for i in self.quartet:
+            for j in i:
+                dop.append(self.check_quartet(j))
+                print(self.check_quartet(j))
+            quartet_frustration_array.append(dop)
+            print()
+            dop = []
+
+        for line in self.quartet:
+            for q in line:
+                frustration = self.check_quartet(q)
+
+                l_1 = q[0]
+                l_2 = q[1]
+                l_3 = q[2]
+                a, b, c, d = 0, 0, 0, 0
+
+                x_a, y_a = self.find_x_y(l_1[0])
+                a = self.matrix_spin_change[y_a][x_a]
+
+                x_b, y_b = self.find_x_y(l_1[2])
+                b = self.matrix_spin_change[y_b][x_b]
+
+                x_c, y_c = self.find_x_y(l_3[2])
+                c = self.matrix_spin_change[y_c][x_c]
+
+                x_d, y_d = self.find_x_y(l_3[0])
+                d = self.matrix_spin_change[y_d][x_d]
+
+                if frustration == 0:
+
+                    print(np.array(q))
+                    if a * l_1[1] * b != 1:
+                        self.spin(x_b, y_b, self.matrix_spin_change)
+                        b = b * -1
+                        print("change_b")
+
+                    if b * l_2[2] * c != 1:
+                        self.spin(x_c, y_c, self.matrix_spin_change)
+                        c = c * -1
+                        print("change_c")
+
+                    if c * l_3[1] * d != 1:
+                        self.spin(x_d, y_d, self.matrix_spin_change)
+                        d = d * -1
+                        print("change_d")
+
+                # else:
+                #     if ch_y == 0:
+                #
+                #         if a * l_1[1] * b != 1:
+                #             self.spin(x_b, y_b, self.matrix_spin_change)
+                #             b = b * -1
+                #         if b * l_2[2] * c != 1:
+                #             self.spin(x_c, y_c, self.matrix_spin_change)
+                #             c = c * -1
+                #
+                #     else:
+                #         if ch_x <= self.size - 2:
+                #             marker = quartet_frustration_array[ch_y - 1][ch_x]
+                #             if a * l_1[1] * b != 1 and marker != 1:
+                #                 self.spin(x_b, y_b, self.matrix_spin_change)
+                #                 b = b * -1
+                #
+                #             if b * l_2[2] * c != 1:
+                #                 self.spin(x_c, y_c, self.matrix_spin_change)
+                #                 c = c * -1
+                #         else:
+                #             marker_u = quartet_frustration_array[ch_y - 1][ch_x]
+                #             marker_r = quartet_frustration_array[ch_y - 1][ch_x + 1]
+                #             if (a * l_1[1] * b != 1 and marker_u == 1) or (a * l_1[1] * b != 1 and marker_r == 1):
+                #                 self.spin(x_b, y_b, self.matrix_spin_change)
+                #                 b = b * -1
+                #
+                #             if b * l_2[2] * c != 1:
+                #                 self.spin(x_c, y_c, self.matrix_spin_change)
+                #                 c = c * -1
+
+            #     ch_x += 1
+            # print()
+            # ch_y += 1
+            # ch_x = 0
+
+        ch_x, ch_y = 0, 0
+        for line in self.quartet:
+            for q in line:
+
+                frustration = self.check_quartet(q)
+
+                l_1 = q[0]
+                l_2 = q[1]
+                l_3 = q[2]
+                a, b, c, d = 0, 0, 0, 0
+
+                x_a, y_a = self.find_x_y(l_1[0])
+                a = self.matrix_spin_change[y_a][x_a]
+
+                x_b, y_b = self.find_x_y(l_1[2])
+                b = self.matrix_spin_change[y_b][x_b]
+
+                x_c, y_c = self.find_x_y(l_3[2])
+                c = self.matrix_spin_change[y_c][x_c]
+
+                x_d, y_d = self.find_x_y(l_3[0])
+                d = self.matrix_spin_change[y_d][x_d]
+
+                if frustration == 1:
+                    if ch_y == 0:
+
+                        if ch_x != self.size - 2:
+                            marker_r = quartet_frustration_array[ch_y][ch_x + 1]
+                            marker_d = quartet_frustration_array[ch_y + 1][ch_x]
+                            marker_dr = quartet_frustration_array[ch_y + 1][ch_x + 1]
+                            if a * l_1[1] * b != 1 and marker_r == 1:
+                                self.spin(x_b, y_b, self.matrix_spin_change)
+                                b = b * -1
+                            if b * l_2[2] * c != 1 and marker_r * marker_d * marker_dr == 1:
+                                self.spin(x_c, y_c, self.matrix_spin_change)
+                                c = c * -1
+                        else:
+                            marker_d = quartet_frustration_array[ch_y + 1][ch_x]
+                            # marker_dr = quartet_frustration_array[ch_y + 1][ch_x + 1]
+                            if a * l_1[1] * b != 1:
+                                self.spin(x_b, y_b, self.matrix_spin_change)
+                                b = b * -1
+                            if b * l_2[2] * c != 1 and marker_d == 1:
+                                self.spin(x_c, y_c, self.matrix_spin_change)
+                                c = c * -1
+
+                    elif ch_y == self.size - 2:
+
+                        if ch_x != self.size - 2:
+                            marker_r = quartet_frustration_array[ch_y][ch_x + 1]
+                            # marker_d = quartet_frustration_array[ch_y + 1][ch_x]
+                            # marker_dr = quartet_frustration_array[ch_y + 1][ch_x + 1]
+                            marker_ur = quartet_frustration_array[ch_y - 1][ch_x + 1]
+                            marker_u = quartet_frustration_array[ch_y - 1][ch_x]
+                            if a * l_1[1] * b != 1 and marker_r * marker_ur * marker_u == 1:
+                                self.spin(x_b, y_b, self.matrix_spin_change)
+                                b = b * -1
+                            if b * l_2[2] * c != 1 and marker_r == 1:
+                                self.spin(x_c, y_c, self.matrix_spin_change)
+                                c = c * -1
+                        else:
+                            # marker_r = quartet_frustration_array[ch_y][ch_x + 1]
+                            # marker_d = quartet_frustration_array[ch_y + 1][ch_x]
+                            # marker_dr = quartet_frustration_array[ch_y + 1][ch_x + 1]
+                            # marker_ur = quartet_frustration_array[ch_y - 1][ch_x + 1]
+                            marker_u = quartet_frustration_array[ch_y - 1][ch_x]
+                            # marker_d = quartet_frustration_array[ch_y + 1][ch_x]
+                            # marker_dr = quartet_frustration_array[ch_y + 1][ch_x + 1]
+                            if a * l_1[1] * b != 1 and marker_u == 1:
+                                self.spin(x_b, y_b, self.matrix_spin_change)
+                                b = b * -1
+                            if b * l_2[2] * c != 1:
+                                self.spin(x_c, y_c, self.matrix_spin_change)
+                                c = c * -1
+
+                    else:
+
+                        if ch_x != self.size - 2:
+                            marker_r = quartet_frustration_array[ch_y][ch_x + 1]
+                            marker_d = quartet_frustration_array[ch_y + 1][ch_x]
+                            marker_dr = quartet_frustration_array[ch_y + 1][ch_x + 1]
+                            marker_ur = quartet_frustration_array[ch_y - 1][ch_x + 1]
+                            marker_u = quartet_frustration_array[ch_y - 1][ch_x]
+                            if a * l_1[1] * b != 1 and marker_r * marker_ur * marker_u == 1:
+                                self.spin(x_b, y_b, self.matrix_spin_change)
+                                b = b * -1
+                            if b * l_2[2] * c != 1 and marker_r * marker_d * marker_dr == 1:
+                                self.spin(x_c, y_c, self.matrix_spin_change)
+                                c = c * -1
+                        else:
+                            # marker_r = quartet_frustration_array[ch_y][ch_x + 1]
+                            # marker_d = quartet_frustration_array[ch_y + 1][ch_x]
+                            # marker_dr = quartet_frustration_array[ch_y + 1][ch_x + 1]
+                            # marker_ur = quartet_frustration_array[ch_y - 1][ch_x + 1]
+                            marker_u = quartet_frustration_array[ch_y - 1][ch_x]
+                            marker_d = quartet_frustration_array[ch_y + 1][ch_x]
+                            # marker_dr = quartet_frustration_array[ch_y + 1][ch_x + 1]
+                            if a * l_1[1] * b != 1 and marker_u == 1:
+                                self.spin(x_b, y_b, self.matrix_spin_change)
+                                b = b * -1
+                            if b * l_2[2] * c != 1 and marker_d:
+                                self.spin(x_c, y_c, self.matrix_spin_change)
+                                c = c * -1
+                ch_x += 1
+            ch_x = 0
+            ch_y += 1
+
+        self.count_energy_all()
+        self.count_frustration_change()
+
+    def check_quartet(self, q):
+        a, b, c, d = q[0][1], q[1][0], q[1][2], q[2][1]
+        if (a * b * c * d) == 1:
+            return 0
+        else:
+            return 1
+
+    def all_combinations(self, n):
+        # Создаем список всех возможных значений для матрицы
+        possible_values = [-1, 1]
+
+        # Генерируем все возможные комбинации для n*n элементов
+        all_combinations = product(possible_values, repeat=n * n)
+
+        # Формируем матрицы из комбинаций и возвращаем их
+        matrices = []
+        for combination in all_combinations:
+            matrix = np.array(combination).reshape(n, n)
+            matrices.append(matrix)
+
+        return matrices
+
+    def test_matrix_con(self, matrix):
+        a = 0
+        for i in range(self.size_matrix):
+            for j in range(self.size_matrix):
+                if i % 2 == 0:
+                    if j % 2 == 0:
+                        matrix[i][j] = a
+                        a += 1
+                else:
+                    if j % 2 != 0:
+                        matrix[i][j] = -5
+        return matrix
+
+    def find_spins(self):
+        matrix = self.all_combinations(self.size)
+        print(self.size_matrix)
+        connections = self.all_combinations(self.size_matrix)
+
+        error_list = []
+        print("start")
+        for con in connections:
+            self.matrix_connection = self.test_matrix_con(con)
+            frustrate = self.algorithm_4()
+            # print(f"frust - {frustrate}")
+            marker = 0
+            # print(self.matrix_connection)
+            for i in matrix:
+                self.matrix_spin_change = i
+                self.matrix_spin = i
+                self.count_energy_all()
+                if frustrate == 0 and self.energy_all_change == -12:
+                    # print(i)
+                    marker = 1
+                    break
+                elif frustrate < 3 and self.energy_all_change == -10:
+                    # print(i)
+                    marker = 1
+                    break
+                elif frustrate > 2 and self.energy_all_change == -8:
+                    # print(i)
+                    marker = 1
+                    break
+            if marker == 0:
+                print("ERROR", frustrate)
+                error_list.append([frustrate, self.matrix_connection])
+        a1, a2, a3, a4, a0 = 0, 0, 0, 0, 0
+        for i in error_list:
+            print(i[0])
+            print(i[1])
+            print()
+            print()
+            if i[0] == 1:
+                a1 += 1
+            elif i[0] == 2:
+                a2 += 1
+            elif i[0] == 3:
+                a3 += 1
+            elif i[0] == 4:
+                a4 += 1
+            elif i[0] == 0:
+                a0 += 1
+        print(f"1 - {a1}, 2 - {a2}, 3 - {a3}, 4 - {a4}, 0 - {a0}")
+
     def start(self):
         self.create_spin_matrix()
         self.create_connection_matrix()
@@ -363,6 +803,20 @@ class Model:
         self.count_frustration()
 
         self.algorithm_1()
+
+        self.count_frustration_change()
+        self.count_energy_all()
+
+    def start_algorithm5t(self):
+        self.matrix_spin = np.random.choice([1], (self.size, self.size))
+        self.matrix_spin_change = self.matrix_spin.copy()
+        self.create_connection_matrix()
+        self.create_spin_id()
+        self.create_quartet()
+
+        self.count_frustration()
+
+        self.algorithm_5_test()
 
         self.count_frustration_change()
         self.count_energy_all()
@@ -437,6 +891,51 @@ class Model:
             with open("results.txt", "w+") as file:
                 file.writelines(letter)
                 file.close()
+
+    def check_files_5t(self, file_manager, size, size_matrix, connection_matrix_extra):
+        self.size = size
+        self.size_matrix = size_matrix
+
+        letter = []
+        for matrix in connection_matrix_extra:
+            self.clear()
+
+            self.size = size
+            self.size_matrix = size_matrix
+
+            self.matrix_connection = file_manager.create_connection_matrix(connection_matrix_extra[matrix])
+
+            self.matrix_spin = np.random.choice([1], (self.size, self.size))
+            self.matrix_spin_change = self.matrix_spin.copy()
+
+            # self.create_spin_matrix()
+
+            self.create_spin_id()
+            self.create_quartet()
+
+            self.count_frustration()
+
+            self.algorithm_5_test()
+
+            self.count_frustration_change()
+            self.count_energy_all()
+            #######################
+            with open(f"files/{matrix}/{file_manager.res_files[matrix]}", 'r') as f:
+                for i in range(4):
+                    f.readline()
+                energy_original = f.readline()
+            print(sum(self.matrix_spin_change[0]))
+            spin_excess = str(sum(list(map(int, (sum(i) for i in self.matrix_spin_change)))))
+            message = \
+                f"{file_manager.con_files[matrix]} \t spin excess - {spin_excess} \t|\t " \
+                f"energy_final - {self.energy_all_change} \t energy_original - {energy_original.split()[1]}\t|\t" \
+                f"percentage - {round(self.energy_all_change / int(energy_original.split()[1])* 100, 2)}%\n"
+            letter.append(message)
+
+            with open("results_2.0.txt", "w+") as file:
+                file.writelines(letter)
+                file.close()
+
 
     def return_parameters(self):
         supper_array = [self.size, self.size_matrix, self.matrix_spin, self.matrix_id, self.matrix_connection,
@@ -603,10 +1102,13 @@ class Interface:
         text3 = f1.render('ПКМ - генерация новой матрицы', True, (50, 50, 50))
         text4 = f1.render('колесико вверх - алгоритм 2', True, (50, 50, 50))
 
+        text5 = f1.render(f'максимальная энергия {-2 *(self.size * self.size - self.size)}', True, (50, 50, 50))
+
         self.screen.blit(text1, (x, y + 30))
         self.screen.blit(text2, (x + 300, y + 30))
         self.screen.blit(text3, (x + 600, y + 30))
         self.screen.blit(text4, (x + 1100, y + 30))
+        self.screen.blit(text5, (x + 1300, y + 30 + 30))
 
     def draw_surface(self, frustration_row, frustration_col, surface, matrix_spin, matrix_connection, x, y):
         surface.fill((145, 144, 89))
@@ -641,9 +1143,14 @@ class Interface:
                         self.model.algorith_2()
                         self.restart(*self.model.return_parameters())
 
+                # if event.type == pygame.MOUSEBUTTONDOWN:
+                #     if event.button == 5:
+                #         self.model.algorithm_4()
+                #         self.restart(*self.model.return_parameters())
+
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if event.button == 5:
-                        self.model.algorithm_3()
+                        model.algorithm_5()
                         self.restart(*self.model.return_parameters())
 
                 ######################################
@@ -764,99 +1271,6 @@ class File_manager:
         return array
 
 
-class Model_for_file:
-    def __init__(self, size, connection_matrix):
-        self. size = size
-
-        self.quartet = []
-        self.matrix_id = []
-
-        self.connection_matrix = connection_matrix
-
-        self.matrix_spin = []
-        self.matrix_spin_change = []
-
-    def find_x_y(self, number):
-        y = number // self.size
-        x = number % self.size
-        return x, y
-
-    def return_number(self, x, y):
-        return y * self.size + x
-
-    def create_quartet(self):
-        quartet = []
-
-        dop = []
-
-        for number in range(self.size * self.size):
-            x, y = self.find_x_y(number)
-
-            if x < self.size - 1:
-                dop.append(self.return_number(x + 1, y))
-            if y < self.size - 1:
-                dop.append(self.return_number(x + 1, y + 1))
-                dop.append(self.return_number(x, y + 1))
-            if len(dop) == 3:
-                dop.append(self.return_number(x, y))
-
-            if len(dop) == 4:
-                quartet.append(dop)
-            dop = []
-
-        self.quartet = np.array(quartet)
-        # self.quartet = list(map(list, (i + 1 for i in self.quartet)))
-        # print(self.quartet)
-
-    def create_matrix_id(self):
-        dop = []
-        collector = []
-
-        for spin in range(1, self.size * self.size + 1):
-            dop.append(spin - 1)
-            if spin != 0 and spin % self.size == 0:
-                collector.append(dop)
-                dop = []
-        self.matrix_id = np.array(collector)
-        print(self.matrix_id)
-
-    def count_energy(self, one_quartet, connection_matrix, spin_matrix):
-        a, b, c, d = one_quartet[3], one_quartet[0], one_quartet[2], one_quartet[1]
-        en_ab, en_bd, en_dc, en_ac = 0, 0, 0, 0
-        energy = 0
-
-        x_a, y_a = self.find_x_y(a)
-        x_b, y_b = self.find_x_y(b)
-        x_c, y_c = self.find_x_y(c)
-        x_d, y_d = self.find_x_y(d)
-
-        spin_a = spin_matrix[y_a][x_a]
-        spin_b = spin_matrix[y_b][x_b]
-        spin_c = spin_matrix[y_c][x_c]
-        spin_d = spin_matrix[y_d][x_d]
-
-        en_ab = spin_a * spin_b * connection_matrix[a][b]
-        en_bd = spin_b * spin_d * connection_matrix[b][d]
-        en_dc = spin_c * spin_d * connection_matrix[d][c]
-        en_ac = spin_a * spin_c * connection_matrix[c][a]
-
-        energy = en_ab + en_bd + en_dc + en_ac
-        return energy
-
-    def generate_spin_matrix(self):
-        self.matrix_spin = np.random.choice([-1, 1], (self.size, self.size))
-        self.matrix_spin_change = self.matrix_spin.copy()
-
-    def spin(self, x, y, spin_matrix):
-        spin_matrix[y][x] = spin_matrix[y][x] * -1
-
-
-
-
-
-
-
-
 
 
 # f = File_manager()
@@ -870,20 +1284,22 @@ class Model_for_file:
 #     break
 
 
-# size = 20
+# size = 5
+# file_mananger = File_manager()
+# file_mananger.size = 3
+#
 # model = Model(size)
-# model.start()
+# model.start_algorithm5()
+# model.find_spins()
+
 #
 #
 
 
-file_manager = File_manager()
-model = Model(8)
+model = Model(20)
+model.start()
+model.algorithm_5_test()
 
-file_manager.start()
-print(file_manager.res_files)
-model.check_files(file_manager, *file_manager.return_parameters())
-
-# interface = Interface(*model.return_parameters())
-# interface.connect(model)
-# interface.start()
+interface = Interface(*model.return_parameters())
+interface.connect(model)
+interface.start()
